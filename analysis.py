@@ -3,19 +3,20 @@ import pandas as pd
 import numpy
 
 
-df = pd.read_csv("island-data-bottle-round-1/prices_round_1_day_0.csv", sep=";")
+
+for x in [-2, -1, 0]:
+    df = pd.read_csv(f"island-data-bottle-round-1/prices_round_1_day_{x}.csv", sep=";")
 
 
+    pearls = df[df["product"] == "PEARLS"]
+    bananas = df[df["product"] == "BANANAS"]
 
 
-pearls = df[df["product"] == "PEARLS"]
-bananas = df[df["product"] == "BANANAS"]
-print(pearls)
+    b = bananas["mid_price"].reset_index()["mid_price"]
+    p = pearls["mid_price"].reset_index()["mid_price"]
 
-print(pearls["mid_price"].mean())
-print(bananas["mid_price"].mean())
+    print("Day ", x)
+    print("Pearls mean: ",p.mean())
+    print("Bananas mean: ",b.mean())
+    print("Correlation: ", p.corr(b))
 
-
-
-# for row in df.iterrows():
-#     print(row[1].)
