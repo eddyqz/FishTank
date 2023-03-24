@@ -10,7 +10,12 @@ from datamodel import OrderDepth, TradingState, Order
 
 
 class Trader:
-
+    def __init__(self):
+        self.bananas_sum = 0
+        self.pearls_sum = 0
+        self.b_num = 0
+        self.p_num = 0
+    
     def run(self, state: TradingState) -> Dict[str, List[Order]]:
         """
         Only method required. It takes all buy and sell orders for all symbols as an input,
@@ -22,21 +27,32 @@ class Trader:
 
         # Iterate over all the keys (the available products) contained in the order depths
         for product in state.order_depths.keys():
-            
+            position = state.position.get(product, 0)
+
 
             # Check if the current product is the 'PEARLS' product, only then run the order logic
             if product == 'PEARLS':
-                position = state.position["PEARLS"]
+                
+                    
+                
 
                 # Retrieve the Order Depth containing all the market BUY and SELL orders for PEARLS
                 order_depth: OrderDepth = state.order_depths[product]
 
+                if(order_depth.sell_orders != {} and order_depth.buy_orders != {}):
+                    mid_price = (min(order_depth.sell_orders.keys()) + max(order_depth.buy_orders.keys()))/2
+                    self.pearls_sum += mid_price
+                    self.p_num += 1
+                    
                 # Initialize the list of Orders to be sent as an empty list
                 orders: list[Order] = []
 
                 # Define a fair value for the PEARLS.
                 # Note that this value of 1 is just a dummy value, you should likely change it!
+                
                 acceptable_price = 10000
+                if(self.p_num > 10):
+                    acceptable_price = self.pearls_sum / self.p_num
 
                 # If statement checks if there are any SELL orders in the PEARLS market
                 if len(order_depth.sell_orders) > 0:
@@ -81,18 +97,26 @@ class Trader:
                 
             # Check if the current product is the 'PEARLS' product, only then run the order logic
             if product == 'BANANAS':
-                position = state.position["BANANAS"]
-
+                
                 # Retrieve the Order Depth containing all the market BUY and SELL orders for PEARLS
                 order_depth: OrderDepth = state.order_depths[product]
 
+                if(order_depth.sell_orders != {} and order_depth.buy_orders != {}):
+                    mid_price = (min(order_depth.sell_orders.keys()) + max(order_depth.buy_orders.keys()))/2
+                    self.bananas_sum += mid_price
+                    self.b_num += 1
+                
+                
                 # Initialize the list of Orders to be sent as an empty list
                 orders: list[Order] = []
 
                 # Define a fair value for the PEARLS.
                 # Note that this value of 1 is just a dummy value, you should likely change it!
-                acceptable_price = 4929
-
+                acceptable_price = 4950
+                if(self.b_num > 10):
+                    acceptable_price = self.bananas_sum / self.b_num
+                
+                
                 # If statement checks if there are any SELL orders in the PEARLS market
                 if len(order_depth.sell_orders) > 0:
 
