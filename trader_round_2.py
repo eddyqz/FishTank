@@ -181,7 +181,7 @@ class Trader:
             coco_vol = - coco_book[coco_best_ask]
             trade_vol = min(pina_vol, coco_vol)
             result["PINA_COLADAS"] = [Order("PINA_COLADAS", pina_best_buy, trade_vol)]
-            result["COCONUTS"] = [Order("COCONUTS", coco_best_ask, trade_vol)]
+            result["COCONUTS"] = [Order("COCONUTS", coco_best_ask, -trade_vol)]
             #Should do some kind of position-limit checking
             
             
