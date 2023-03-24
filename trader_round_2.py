@@ -107,7 +107,9 @@ class Trader:
             # Check if the current product is the 'PEARLS' product, only then run the order logic
             if product == 'BANANAS':
                 
-                
+                for trade in state.own_trades[product]:
+                    print("Trade for bananas of", trade.quantity ,"units for price", trade.price)
+                    
                 order_depth: OrderDepth = state.order_depths[product]
                 
                 if(order_depth.sell_orders != {} and order_depth.buy_orders != {}):
@@ -128,7 +130,7 @@ class Trader:
                 if(len(self.banana_data) > 100):
                     mean_price = numpy.mean(self.banana_data)
                     
-                    difference = 20
+                    difference = 10
                     buy_volume = LIMIT - position
                     buy_order = Order(product, mean_price - difference, buy_volume//2)
                     buy_order2 = Order(product, mean_price - 2 * difference, buy_volume//2)
@@ -221,8 +223,15 @@ class Trader:
         pina_best_ask = min(pina_book.sell_orders.keys())
         coco_best_buy = max(coco_book.buy_orders.keys())
         
+        cutoff_1 = cutoff_2 = CUTOFF
+        coco_pos = state.position.get("COCONUTS",0)
+        pina_pos = state.position.get("PINA_COLADAS",0)
+        if(pina_pos > 0 and coco_pos < 0):
+            cutoff_1 *= 3 #harder to buy pinas sell coconuts
+        if(pina_pos < 0 and coco_pos > 0):
+            cutoff_2 *= 3 #harder to sell pinas buy coconuts
         
-        if (coco_best_buy * mean_ratio - pina_best_ask) > CUTOFF:
+        if (coco_best_buy * mean_ratio - pina_best_ask) > cutoff_1:
             #buy pinas, sell coconuts
             pina_vol = - pina_book.sell_orders[pina_best_ask]
             coco_vol = coco_book.buy_orders[coco_best_buy]
@@ -231,7 +240,7 @@ class Trader:
             result["COCONUTS"] = [Order("COCONUTS", coco_best_buy, -trade_vol)] #negative trade_vol since its a sell
             #Should do some kind of position-limit checking
 
-        if (pina_best_buy - coco_best_ask * mean_ratio) > CUTOFF:
+        if (pina_best_buy - coco_best_ask * mean_ratio) > cutoff_2:
             #SELL pinas, buy coconuts
             pina_vol = pina_book.buy_orders[pina_best_buy]
             coco_vol = - coco_book.sell_orders[coco_best_ask]
