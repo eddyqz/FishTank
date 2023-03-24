@@ -15,6 +15,9 @@ class Trader:
         self.pearls_sum = 0
         self.b_num = 0
         self.p_num = 0
+        
+        self.coco_ask = self.coco_bid = self.pina_ask = self.pina_bid = 0
+        
     
     def run(self, state: TradingState) -> Dict[str, List[Order]]:
         """
@@ -51,8 +54,8 @@ class Trader:
                 # Note that this value of 1 is just a dummy value, you should likely change it!
                 
                 acceptable_price = 10000
-                if(self.p_num > 10):
-                    acceptable_price = self.pearls_sum / self.p_num
+                if(self.p_num > 10):  #Start using the average price when have enough data (10 samples?)
+                    acceptable_price = self.pearls_sum / self.p_num #comment this line out to go back to old version
 
                 # If statement checks if there are any SELL orders in the PEARLS market
                 if len(order_depth.sell_orders) > 0:
@@ -111,10 +114,10 @@ class Trader:
                 orders: list[Order] = []
 
                 # Define a fair value for the PEARLS.
-                # Note that this value of 1 is just a dummy value, you should likely change it!
+        
                 acceptable_price = 4950
-                if(self.b_num > 10):
-                    acceptable_price = self.bananas_sum / self.b_num
+                if(self.b_num > 10): #Start using the average price when have enough data (10 samples?)
+                    acceptable_price = self.bananas_sum / self.b_num #comment this line out to go back to old version
                 
                 
                 # If statement checks if there are any SELL orders in the PEARLS market
@@ -158,4 +161,40 @@ class Trader:
                 # Return the dict of orders
                 # These possibly contain buy or sell orders for BANANAS
                 # Depending on the logic above
+                
+                
+                
+        
+        #PAIRS TRADING - ROUGH IDEA:
+        CUTOFF = 30 #choose some value
+        mean_ratio = 15000/8000 #we could use empirical mean instead of given prices
+        
+        coco_book: OrderDepth = state.order_depths["COCONUTS"]
+        pina_book: OrderDepth = state.order_depths["PINA_COLADAS"]
+        
+        coco_best_ask = min(coco_book.sell_orders.keys())
+        pina_best_buy = max(pina_book.buy_orders.keys())
+        
+        if (pina_best_buy - coco_best_ask * mean_ratio) > CUTOFF:
+            #buy pinas, sell coconuts
+            pina_vol = pina_book[pina_best_buy]
+            coco_vol = - coco_book[coco_best_ask]
+            trade_vol = min(pina_vol, coco_vol)
+            result["PINA_COLADAS"] = [Order("PINA_COLADAS", pina_best_buy, trade_vol)]
+            result["COCONUTS"] = [Order("COCONUTS", coco_best_ask, trade_vol)]
+            #Should do some kind of position-limit checking
+            
+            
+        #Implement the same thing if coconuts overvalued, pinas undervalued
+        
+        
+        
+        
+        
+        print(state.position)
+        
+        
+        
+        
+                
         return result
