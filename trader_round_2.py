@@ -107,7 +107,7 @@ class Trader:
             # Check if the current product is the 'PEARLS' product, only then run the order logic
             if product == 'BANANAS':
                 
-                for trade in state.own_trades[product]:
+                for trade in state.own_trades.get(product,[]):
                     print("Trade for bananas of", trade.quantity ,"units for price", trade.price)
                     
                 order_depth: OrderDepth = state.order_depths[product]
