@@ -8,8 +8,8 @@ SYMBOLS = ["BANANAS", "PEARLS", "COCONUTS", "PINA_COLADAS", "DIVING_GEAR", "DOLP
 
 for x in [0, 1, 2]:
     print("\n\nDay", x ,": \n")
-    df = pd.read_csv(f"island-data-bottle-round-3/prices_round_3_day_{x}.csv", sep=";")
-    #df = pd.read_csv("example.csv", sep=";")
+    #df = pd.read_csv(f"island-data-bottle-round-3/prices_round_3_day_{x}.csv", sep=";")
+    df = pd.read_csv("example.csv", sep=";")
 
     product_dfs: Dict[str,pd.DataFrame] = {}
     product_mid_prices: Dict[str,pd.Series] = {}
@@ -50,7 +50,7 @@ for x in [0, 1, 2]:
     #     c1 = c.shift(periods=k)
     #     print(c1.corr(pc))
         
-    # b = product_mid_prices["BANANAS"]
+    b = product_mid_prices["BANANAS"]
     # bt = pd.DataFrame(b)
     
     # k = 100
@@ -72,15 +72,15 @@ for x in [0, 1, 2]:
     # #     if bl[i] == max(bl[i-10:i+10]):
     # #         print(i)
     
-    # k = 50
-    # output = pd.DataFrame(b)
-    # output["sma2"] = b.rolling(k).mean()
-    # output["prev"] = b.shift(k).rolling(k).mean()
-    # diff = output["sma2"] - output["prev"]
-    # pyplot.plot(output)
-    # pyplot.show()
-    # pyplot.plot(diff)
-    # pyplot.show()
+    k = 50
+    output = pd.DataFrame(b)
+    output["sma2"] = b.rolling(k).mean()
+    output["prev"] = b.shift(k).rolling(k).mean()
+    diff = output["sma2"] - output["prev"]
+    pyplot.plot(output)
+    pyplot.show()
+    pyplot.plot(diff)
+    pyplot.show()
     
 
 
