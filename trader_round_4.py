@@ -25,10 +25,24 @@ class Trader:
         self.bd = []
         self.bl = []
         self.last_buy = 0
-
+        
+        
+        self.last_berries = 1000000
 
     
+    
     def run(self, state: TradingState) -> Dict[str, List[Order]]:
+        
+        def get_best_orders(book: OrderDepth):
+            return (max(book.buy_orders.keys()), min(book.sell_orders.keys()))
+        
+        def dict_sum(dict: Dict):
+            sum = 0
+            for key in dict.keys():
+               sum += dict[key]
+            return abs(sum) #in case it's sell dict with all negative 
+                
+        
         k = 20
         
         print(state.position)
@@ -163,99 +177,6 @@ class Trader:
                     
                 
                 
-                # acceptable_price = 4950
-                # if(self.b_num > 10): #Start using the average price when have enough data (10 samples?)
-                #     acceptable_price = self.bananas_sum / self.b_num #comment this line out to go back to old version
-                
-                
-                
-                # if(order_depth.sell_orders != {} and order_depth.buy_orders != {}):
-                #     mid_price = (min(order_depth.sell_orders.keys()) + max(order_depth.buy_orders.keys()))/2
-                #     self.banana_data.append(mid_price)
-                    
-                # if(len(self.banana_data) > 100):
-                #     mean_price = numpy.mean(self.banana_data)
-                    
-                #     difference = 10
-                #     buy_volume = LIMIT - position
-                #     buy_order = Order(product, mean_price - difference, buy_volume//2)
-                #     buy_order2 = Order(product, mean_price - 2 * difference, buy_volume//2)
-                    
-                #     ask_volume = -LIMIT - position
-                #     ask_order = Order(product, mean_price + difference, ask_volume//2)
-                #     ask_order2 = Order(product, mean_price + 2 * difference, ask_volume//2)
-                    
-                    
-                #     result[product] = [buy_order, ask_order, buy_order2, ask_order2]
-                    
-                    
-                # Retrieve the Order Depth containing all the market BUY and SELL orders for PEARLS
-                # order_depth: OrderDepth = state.order_depths[product]
-
-                # if(order_depth.sell_orders != {} and order_depth.buy_orders != {}):
-                #     mid_price = (min(order_depth.sell_orders.keys()) + max(order_depth.buy_orders.keys()))/2
-                #     self.bananas_sum += mid_price
-                #     self.b_num += 1
-                
-                
-                # # Initialize the list of Orders to be sent as an empty list
-                # orders: list[Order] = []
-
-                # # Define a fair value for the PEARLS.
-        
-                # acceptable_price = 4950
-                # if(self.b_num > 10): #Start using the average price when have enough data (10 samples?)
-                #     acceptable_price = self.bananas_sum / self.b_num #comment this line out to go back to old version
-                
-                
-                # # If statement checks if there are any SELL orders in the PEARLS market
-                # if len(order_depth.sell_orders) > 0:
-
-                #     # Sort all the available sell orders by their price,
-                #     # and select only the sell order with the lowest price
-                #     best_ask = min(order_depth.sell_orders.keys())
-                #     best_ask_volume = order_depth.sell_orders[best_ask] #This will be a negative number
-
-                #     # Check if the lowest ask (sell order) is lower than the above defined fair value
-                #     if best_ask < acceptable_price and position < LIMIT:
-                #         best_ask_volume = max(best_ask_volume, position - LIMIT)
-
-                #         # In case the lowest ask is lower than our fair value,
-                #         # This presents an opportunity for us to buy cheaply
-                #         # The code below therefore sends a BUY order at the price level of the ask,
-                #         # with the same quantity
-                #         # We expect this order to trade with the sell order
-                #         print("BUY", str(-best_ask_volume) + "x", best_ask, product)
-                #         orders.append(Order(product, best_ask, -best_ask_volume))
-
-                # # The below code block is similar to the one above,
-                # # the difference is that it finds the highest bid (buy order)
-                # # If the price of the order is higher than the fair value
-                # # This is an opportunity to sell at a premium
-                # if len(order_depth.buy_orders) != 0:
-                #     best_bid = max(order_depth.buy_orders.keys())
-                #     best_bid_volume = order_depth.buy_orders[best_bid] #this will be positive volume
-                    
-                    
-                #     if best_bid > acceptable_price and position > -LIMIT:
-                #         best_bid_volume = min(best_bid_volume, LIMIT + position)
-                        
-                #         print("SELL", str(best_bid_volume) + "x", best_bid, product)
-                #         orders.append(Order(product, best_bid, -best_bid_volume))
-
-                # # Add all the above orders to the result dict
-                # result[product] = orders
-
-                # Return the dict of orders
-                # These possibly contain buy or sell orders for BANANAS
-                # Depending on the logic above
-                
-                
-                
-                
-                
-                
-        
         #PAIRS TRADING - ROUGH IDEA:
         CUTOFF = 2 #choose some value
         mean_ratio = 15000/8000 #we could use empirical mean instead of given prices
@@ -297,7 +218,140 @@ class Trader:
             result["COCONUTS"] = [Order("COCONUTS", coco_best_ask, trade_vol * 2)] #negative trade_vol since its a sell
             #Should do some kind of position-limit checking
 
-   
+
+        
+        
+        
+        #ETF ARBITRAGE
+        picnic_book: OrderDepth = state.order_depths["PICNIC_BASKET"]
+        dip_book: OrderDepth = state.order_depths["DIP"]
+        bread_book: OrderDepth = state.order_depths["BAGUETTE"]
+        uk_book: OrderDepth = state.order_depths["UKULELE"]
+        
+        result["DIP"] = []
+        result["BAGUETTE"] = []
+        result["UKULELE"] = []
+        result["PICNIC_BASKET"] = []
+        
+        
+        #get buy and sell prices of the picnic basket
+        picnic_bid, picnic_ask = get_best_orders(picnic_book)
+        
+        bp = position["PICNIC_BASKET"]
+        
+        #if(dict_sum(dip_book.sell_orders) >= 4 and dict_sum(bread_book.sell_orders) >= 2 and dict_sum(uk_book.sell_orders) >= 1):
+        for i in range(5):
+            try: 
+                #calculate buy cost of combined basket items
+                buy_cost = 0
+                
+                dips = 0
+                breads = 0
+                
+                temp_orders = {"BAGUETTE":[], "DIP":[], "UKULELE":[]}
+                
+                while(dips < 4):
+                    #find best sell order that we will use to buy
+                    dip_sell = get_best_orders(dip_book)[1]
+                    qty = min(4-dips, -dip_book.sell_orders[dip_sell]) 
+                    dips += qty
+                    
+                    #remove listing from order book
+                    del dip_book.sell_orders[dip_sell] 
+                    
+                    buy_cost += dip_sell * qty
+                    temp_orders["DIP"].append(Order("DIP", dip_sell, qty)) #buy
+                
+                while(breads < 2):
+                    #find best sell order that we will use to buy
+                    bread_sell = get_best_orders(bread_book)[1]
+                    qty = min(2-breads, -bread_book.sell_orders[bread_sell]) 
+                    breads += qty
+                    
+                    #remove listing from order book
+                    del bread_book.sell_orders[bread_sell] 
+                    
+                    buy_cost += bread_sell * qty
+                    temp_orders["BAGUETTE"].append(Order("BAGUETTE", bread_sell, qty)) #buy
+                    
+                    
+                uk_sell = get_best_orders(uk_book)[1]
+                qty = 1
+                #uk_book.sell_orders[uk_sell] -= qty
+            
+                buy_cost += uk_sell * qty
+                temp_orders["UKULELE"].append(Order("UKULELE", uk_sell, qty)) #buy
+            
+                print(buy_cost, picnic_bid, "a")
+                if(buy_cost < picnic_bid):
+                    result["PICNIC_BASKET"].append(Order("PICNIC_BASKET", picnic_bid, -1)) #sell basket
+                    result["DIP"].extend(temp_orders["DIP"]) #buy the rest
+                    result["UKULELE"].extend(temp_orders["UKULELE"])
+                    result["BAGUETTE"].extend(temp_orders["BAGUETTE"])
+            except:
+                pass        
+                
+            #if(dict_sum(dip_book.buy_orders) >= 4 and dict_sum(bread_book.buy_orders) >= 2 and dict_sum(uk_book.buy_orders) >= 1):
+            try:  
+                #calculate sell cost
+                sell_cost = 0
+                
+                
+                dips = 0
+                breads = 0
+                
+                temp_orders = {"BAGUETTE":[], "DIP":[], "UKULELE":[]}
+                
+                while(dips < 4):
+                    #find best sell order that we will use to buy
+                    dip_buy = get_best_orders(dip_book)[0]
+                    qty = min(4-dips, dip_book.buy_orders[dip_buy]) 
+                    dips += qty
+                    
+                    #remove listing from order book
+                    del dip_book.buy_orders[dip_buy] 
+                    
+                    sell_cost += dip_buy * qty
+                    temp_orders["DIP"].append(Order("DIP", dip_buy, -qty)) #sell
+                
+                while(breads < 2):
+                    #find best sell order that we will use to buy
+                    bread_buy = get_best_orders(bread_book)[0]
+                    qty = min(2-breads, bread_book.buy_orders[bread_buy]) 
+                    breads += qty
+                    
+                    #remove listing from order book
+                    del bread_book.buy_orders[bread_buy] 
+                    
+                    sell_cost += bread_buy * qty
+                    temp_orders["BAGUETTE"].append(Order("BAGUETTE", bread_buy, -qty)) #sell
+                    
+                    
+                uk_buy = get_best_orders(uk_book)[0]
+                qty = 1
+                #uk_book.buy_orders[uk_buy] -= qty
+            
+                sell_cost += uk_buy * qty
+                temp_orders["UKULELE"].append(Order("UKULELE", uk_buy, -qty)) #sell
+                
+                print(sell_cost, picnic_ask, "b")
+                if(sell_cost > picnic_ask):
+                    result["PICNIC_BASKET"].append(Order("PICNIC_BASKET", picnic_ask, 1)) #buy basket
+                    result["DIP"].extend(temp_orders["DIP"]) #sell the rest
+                    result["UKULELE"].extend(temp_orders["UKULELE"])
+                    result["BAGUETTE"].extend(temp_orders["BAGUETTE"])
+            except:
+                pass     
+            
+        
+        
+        
+        #Sell berries midday
+        
+        if state.timestamp > 45000 and state.timestamp < 55000:
+            
+            pass
+            
         
                 
         return result

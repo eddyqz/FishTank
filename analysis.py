@@ -4,12 +4,12 @@ import numpy
 from typing import Dict, List
 from matplotlib import pyplot
 
-SYMBOLS = ["BANANAS", "PEARLS", "COCONUTS", "PINA_COLADAS", "DIVING_GEAR", "DOLPHIN_SIGHTINGS"]
+SYMBOLS = ["BANANAS", "PEARLS", "COCONUTS", "PINA_COLADAS", "DIVING_GEAR", "DOLPHIN_SIGHTINGS", "BERRIES", "PICNIC_BASKET","DIP","UKULELE","BAGUETTE"]
 
-for x in [0, 1, 2]:
+for x in [1, 2, 3]:
     print("\n\nDay", x ,": \n")
-    #df = pd.read_csv(f"island-data-bottle-round-3/prices_round_3_day_{x}.csv", sep=";")
-    df = pd.read_csv("example.csv", sep=";")
+    df = pd.read_csv(f"island-data-bottle-round-4/prices_round_4_day_{x}.csv", sep=";")
+    #df = pd.read_csv("example.csv", sep=";")
 
     product_dfs: Dict[str,pd.DataFrame] = {}
     product_mid_prices: Dict[str,pd.Series] = {}
@@ -39,8 +39,12 @@ for x in [0, 1, 2]:
     #print(diff.mean()) # mathematically should be zero
     print("standard dev of difference between pinas and coconuts:", diff.std()) #tells us how far this difference spreads
     
-    print(product_mid_prices["DOLPHIN_SIGHTINGS"].shift(500).corr(product_mid_prices["DIVING_GEAR"]))
+    #print(product_mid_prices["DOLPHIN_SIGHTINGS"].shift(500).corr(product_mid_prices["DIVING_GEAR"]))
     
+    
+    
+    combined = 4 * product_mid_prices["DIP"] + 2 * product_mid_prices["BAGUETTE"] + product_mid_prices["UKULELE"]
+    print(combined.corr(product_mid_prices["PICNIC_BASKET"])) #Generally around .85, hopefully low enough to extract some profit
     
     
     #Checking to see if pina colada leads coconuts or vice versa
@@ -72,15 +76,18 @@ for x in [0, 1, 2]:
     # #     if bl[i] == max(bl[i-10:i+10]):
     # #         print(i)
     
-    k = 50
-    output = pd.DataFrame(b)
-    output["sma2"] = b.rolling(k).mean()
-    output["prev"] = b.shift(k).rolling(k).mean()
-    diff = output["sma2"] - output["prev"]
-    pyplot.plot(output)
-    pyplot.show()
-    pyplot.plot(diff)
-    pyplot.show()
+  
+  #BANANA GRAPHING
+  
+    # k = 50
+    # output = pd.DataFrame(b)
+    # output["sma2"] = b.rolling(k).mean()
+    # output["prev"] = b.shift(k).rolling(k).mean()
+    # diff = output["sma2"] - output["prev"]
+    # pyplot.plot(output)
+    # pyplot.show()
+    # pyplot.plot(diff)
+    # pyplot.show()
     
 
 
