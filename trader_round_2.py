@@ -9,8 +9,11 @@ from typing import Dict, List
 from datamodel import OrderDepth, TradingState, Order
 import pandas as pd
 import numpy 
+import queue
 
 class Trader:
+    
+    
     def __init__(self):
         self.bananas_sum = 0
         self.pearls_sum = 0
@@ -19,10 +22,14 @@ class Trader:
         
         self.coco_ask = self.coco_bid = self.pina_ask = self.pina_bid = 0
         
-        self.banana_data = []
+        self.bd = []
+        self.bl = []
+        self.last_buy = 0
+
+
     
     def run(self, state: TradingState) -> Dict[str, List[Order]]:
-        
+        k = 20
         
         print(state.position)
 
@@ -107,40 +114,72 @@ class Trader:
             # Check if the current product is the 'PEARLS' product, only then run the order logic
             if product == 'BANANAS':
                 
-                for trade in state.own_trades.get(product,[]):
-                    print("Trade for bananas of", trade.quantity ,"units for price", trade.price)
+                k = 50
+                
+                # for trade in state.own_trades.get(product,[]):
+                #     print("Trade for bananas of", trade.quantity ,"units for price", trade.price)
                     
                 order_depth: OrderDepth = state.order_depths[product]
                 
                 if(order_depth.sell_orders != {} and order_depth.buy_orders != {}):
                     mid_price = (min(order_depth.sell_orders.keys()) + max(order_depth.buy_orders.keys()))/2
-                    self.bananas_sum += mid_price
-                    self.b_num += 1
                     
-                acceptable_price = 4950
-                if(self.b_num > 10): #Start using the average price when have enough data (10 samples?)
-                    acceptable_price = self.bananas_sum / self.b_num #comment this line out to go back to old version
+                    self.bd.insert(0,mid_price)
+                    if(len(self.bd) > 3 * k):
+                        self.bd = self.bd[0: 2*k + 5]
+                        
+                    self.bl.append(mid_price)
+                
+                
+                if(len(self.bd) > 2 * k):
+                    current = numpy.mean(self.bd[0:k])
+                    prev = numpy.mean(self.bd[k: 2*k])
+                    diff = current - prev
+                    
+                    
+                    # b = pd.Series(self.bl)
+                    # diff_list = b.rolling(200).mean() - b.shift(200).rolling(200).mean()
+                    # diff = diff_list
+                    THRESHOLD = 1.8
+                    if(diff > THRESHOLD and position < LIMIT):
+                        #increasing, so buy
+                        volume = LIMIT - position
+                        best_price = min(order_depth.sell_orders.keys())
+                        result[product] = [Order(product, best_price, volume)]
+                        
+                    elif(diff < -THRESHOLD and position > -LIMIT):
+                        
+                        #decreasing, so sell
+                        volume = -LIMIT - position
+                        best_price = max(order_depth.buy_orders.keys())
+                        result[product] = [Order(product, best_price, volume)]
+                    
+                
+                
+                # acceptable_price = 4950
+                # if(self.b_num > 10): #Start using the average price when have enough data (10 samples?)
+                #     acceptable_price = self.bananas_sum / self.b_num #comment this line out to go back to old version
                 
                 
                 
-                if(order_depth.sell_orders != {} and order_depth.buy_orders != {}):
-                    mid_price = (min(order_depth.sell_orders.keys()) + max(order_depth.buy_orders.keys()))/2
-                    self.banana_data.append(mid_price)
+                # if(order_depth.sell_orders != {} and order_depth.buy_orders != {}):
+                #     mid_price = (min(order_depth.sell_orders.keys()) + max(order_depth.buy_orders.keys()))/2
+                #     self.banana_data.append(mid_price)
                     
-                if(len(self.banana_data) > 100):
-                    mean_price = numpy.mean(self.banana_data)
+                # if(len(self.banana_data) > 100):
+                #     mean_price = numpy.mean(self.banana_data)
                     
-                    difference = 10
-                    buy_volume = LIMIT - position
-                    buy_order = Order(product, mean_price - difference, buy_volume//2)
-                    buy_order2 = Order(product, mean_price - 2 * difference, buy_volume//2)
+                #     difference = 10
+                #     buy_volume = LIMIT - position
+                #     buy_order = Order(product, mean_price - difference, buy_volume//2)
+                #     buy_order2 = Order(product, mean_price - 2 * difference, buy_volume//2)
                     
-                    ask_volume = -LIMIT - position
-                    ask_order = Order(product, mean_price + difference, ask_volume//2)
-                    ask_order2 = Order(product, mean_price + 2 * difference, ask_volume//2)
+                #     ask_volume = -LIMIT - position
+                #     ask_order = Order(product, mean_price + difference, ask_volume//2)
+                #     ask_order2 = Order(product, mean_price + 2 * difference, ask_volume//2)
                     
                     
-                    result[product] = [buy_order, ask_order, buy_order2, ask_order2]
+                #     result[product] = [buy_order, ask_order, buy_order2, ask_order2]
                     
                     
                 # Retrieve the Order Depth containing all the market BUY and SELL orders for PEARLS
@@ -211,7 +250,7 @@ class Trader:
                 
         
         #PAIRS TRADING - ROUGH IDEA:
-        CUTOFF = 10 #choose some value
+        CUTOFF = 2 #choose some value
         mean_ratio = 15000/8000 #we could use empirical mean instead of given prices
         
         coco_book: OrderDepth = state.order_depths["COCONUTS"]
@@ -227,26 +266,28 @@ class Trader:
         coco_pos = state.position.get("COCONUTS",0)
         pina_pos = state.position.get("PINA_COLADAS",0)
         if(pina_pos > 0 and coco_pos < 0):
-            cutoff_1 *= 3 #harder to buy pinas sell coconuts
+            cutoff_1 *= 5 #harder to buy pinas sell coconuts
         if(pina_pos < 0 and coco_pos > 0):
-            cutoff_2 *= 3 #harder to sell pinas buy coconuts
+            cutoff_2 *= 5 #harder to sell pinas buy coconuts
         
-        if (coco_best_buy * mean_ratio - pina_best_ask) > cutoff_1:
+        diff1 = coco_best_buy * mean_ratio - pina_best_ask
+        if (diff1) > cutoff_1:
             #buy pinas, sell coconuts
             pina_vol = - pina_book.sell_orders[pina_best_ask]
             coco_vol = coco_book.buy_orders[coco_best_buy]
-            trade_vol = min(pina_vol, coco_vol)
+            trade_vol = min(pina_vol, coco_vol//2, diff1//cutoff_1)
             result["PINA_COLADAS"] = [Order("PINA_COLADAS", pina_best_ask, trade_vol)]
-            result["COCONUTS"] = [Order("COCONUTS", coco_best_buy, -trade_vol)] #negative trade_vol since its a sell
+            result["COCONUTS"] = [Order("COCONUTS", coco_best_buy, -trade_vol * 2)] #negative trade_vol since its a sell
             #Should do some kind of position-limit checking
 
-        if (pina_best_buy - coco_best_ask * mean_ratio) > cutoff_2:
+        diff2 = pina_best_buy - coco_best_ask * mean_ratio
+        if (diff2) > cutoff_2:
             #SELL pinas, buy coconuts
             pina_vol = pina_book.buy_orders[pina_best_buy]
             coco_vol = - coco_book.sell_orders[coco_best_ask]
-            trade_vol = min(pina_vol, coco_vol)
+            trade_vol = min(pina_vol, coco_vol//2, diff2//cutoff_2)
             result["PINA_COLADAS"] = [Order("PINA_COLADAS", pina_best_buy, -trade_vol)]
-            result["COCONUTS"] = [Order("COCONUTS", coco_best_ask, trade_vol)] #negative trade_vol since its a sell
+            result["COCONUTS"] = [Order("COCONUTS", coco_best_ask, trade_vol * 2)] #negative trade_vol since its a sell
             #Should do some kind of position-limit checking
 
    
