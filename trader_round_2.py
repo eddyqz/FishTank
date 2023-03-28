@@ -125,8 +125,8 @@ class Trader:
                     mid_price = (min(order_depth.sell_orders.keys()) + max(order_depth.buy_orders.keys()))/2
                     
                     self.bd.insert(0,mid_price)
-                    if(len(self.bd) > 3 * k):
-                        self.bd = self.bd[0: 2*k + 5]
+                    if(len(self.bd) > 2 * k):
+                        self.bd = self.bd[0: 2*k ]
                         
                     self.bl.append(mid_price)
                 
