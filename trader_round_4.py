@@ -237,8 +237,6 @@ class Trader:
         #get buy and sell prices of the picnic basket
         picnic_bid, picnic_ask = get_best_orders(picnic_book)
         
-        bp = position["PICNIC_BASKET"]
-        
         #if(dict_sum(dip_book.sell_orders) >= 4 and dict_sum(bread_book.sell_orders) >= 2 and dict_sum(uk_book.sell_orders) >= 1):
         for i in range(5):
             try: 
@@ -346,12 +344,27 @@ class Trader:
         
         
         
+        berries_book = state.order_depths["BERRIES"]
+        
+        #buy berries at start
+        
+        if state.timestamp < 5000:
+            bid, ask = get_best_orders(berries_book)
+            
+            qty = -berries_book.sell_orders[ask]
+            result["BERRIES"] = [Order("BERRIES", ask, qty)]
+
+
+        
         #Sell berries midday
         
         if state.timestamp > 45000 and state.timestamp < 55000:
             
-            pass
+            bid, ask = get_best_orders(berries_book)
             
+            qty = berries_book.buy_orders[bid]
+            result["BERRIES"] = [Order("BERRIES", bid, -qty)]
         
-                
+        
+        
         return result

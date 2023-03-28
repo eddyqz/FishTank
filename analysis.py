@@ -89,6 +89,11 @@ for x in [1, 2, 3]:
     # pyplot.plot(diff)
     # pyplot.show()
     
+    output = pd.DataFrame(product_mid_prices["DOLPHIN_SIGHTINGS"]/ product_mid_prices["DOLPHIN_SIGHTINGS"].mean() )
+    output["DIVING_GEAR"] = product_mid_prices["DIVING_GEAR"] / product_mid_prices["DIVING_GEAR"].mean()
+    pyplot.plot(output, label=output.columns)
+    pyplot.legend()
+    pyplot.show()
 
 
     
