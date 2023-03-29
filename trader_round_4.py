@@ -243,7 +243,8 @@ class Trader:
         #get buy and sell prices of the picnic basket
         picnic_bid, picnic_ask = get_best_orders(picnic_book)
         
-        bp = state.position.get("PICNIC_BASKET",0)
+        bp = state.position.get("PICNIC_BASKET",0) * 4
+        offset = - 370 + bp // 2
         
         #if(dict_sum(dip_book.sell_orders) >= 4 and dict_sum(bread_book.sell_orders) >= 2 and dict_sum(uk_book.sell_orders) >= 1):
         while(True):
@@ -290,7 +291,7 @@ class Trader:
             
                 print("sell basket for", picnic_bid, "buy items for", buy_cost)
                 
-                if(buy_cost < picnic_bid + bp):
+                if(buy_cost < picnic_bid + offset):
                     result["PICNIC_BASKET"].append(Order("PICNIC_BASKET", picnic_bid, -1)) #sell basket
                     result["DIP"].extend(temp_orders["DIP"]) #buy the rest
                     result["UKULELE"].extend(temp_orders["UKULELE"])
@@ -348,7 +349,7 @@ class Trader:
                 temp_orders["UKULELE"].append(Order("UKULELE", uk_buy, -qty)) #sell
                 
                 print("buy basket for", picnic_ask, "sell items for", sell_cost)
-                if(sell_cost > picnic_ask + bp):
+                if(sell_cost > picnic_ask + offset):
                     result["PICNIC_BASKET"].append(Order("PICNIC_BASKET", picnic_ask, 1)) #buy basket
                     result["DIP"].extend(temp_orders["DIP"]) #sell the rest
                     result["UKULELE"].extend(temp_orders["UKULELE"])
