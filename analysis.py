@@ -45,7 +45,9 @@ for x in [1, 2, 3]:
     
     combined = 4 * product_mid_prices["DIP"] + 2 * product_mid_prices["BAGUETTE"] + product_mid_prices["UKULELE"]
     print(combined.corr(product_mid_prices["PICNIC_BASKET"])) #Generally around .85, hopefully low enough to extract some profit
-    
+    error = product_mid_prices["PICNIC_BASKET"] - combined
+    print(error.mean())
+    print(error.std())
     
     #Checking to see if pina colada leads coconuts or vice versa
     #Seems like no

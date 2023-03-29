@@ -86,7 +86,7 @@ class Trader:
                     acceptable_price = self.pearls_sum / self.p_num #comment this line out to go back to old version
 
                 # If statement checks if there are any SELL orders in the PEARLS market
-                if len(order_depth.sell_orders) > 0:
+                while len(order_depth.sell_orders) > 0:
 
                     # Sort all the available sell orders by their price,
                     # and select only the sell order with the lowest price
@@ -104,12 +104,15 @@ class Trader:
                         # We expect this order to trade with the sell order
                         print("BUY", str(-best_ask_volume) + "x", best_ask, product)
                         orders.append(Order(product, best_ask, -best_ask_volume))
-
+                        del order_depth.sell_orders[best_ask]
+                    else:
+    
+                        break
                 # The below code block is similar to the one above,
                 # the difference is that it finds the highest bid (buy order)
                 # If the price of the order is higher than the fair value
                 # This is an opportunity to sell at a premium
-                if len(order_depth.buy_orders) != 0:
+                while len(order_depth.buy_orders) != 0:
                     best_bid = max(order_depth.buy_orders.keys())
                     best_bid_volume = order_depth.buy_orders[best_bid] #this will be positive volume
                     
@@ -118,7 +121,10 @@ class Trader:
                         best_bid_volume = min(best_bid_volume, LIMIT + position)
                         print("SELL", str(best_bid_volume) + "x", best_bid, product)
                         orders.append(Order(product, best_bid, -best_bid_volume))
-
+                        
+                        del order_depth.buy_orders[best_bid]
+                    else:
+                        break
                 # Add all the above orders to the result dict
                 result[product] = orders
 
@@ -237,8 +243,10 @@ class Trader:
         #get buy and sell prices of the picnic basket
         picnic_bid, picnic_ask = get_best_orders(picnic_book)
         
+        bp = state.position.get("PICNIC_BASKET",0)
+        
         #if(dict_sum(dip_book.sell_orders) >= 4 and dict_sum(bread_book.sell_orders) >= 2 and dict_sum(uk_book.sell_orders) >= 1):
-        for i in range(5):
+        while(True):
             try: 
                 #calculate buy cost of combined basket items
                 buy_cost = 0
@@ -280,16 +288,23 @@ class Trader:
                 buy_cost += uk_sell * qty
                 temp_orders["UKULELE"].append(Order("UKULELE", uk_sell, qty)) #buy
             
-                print(buy_cost, picnic_bid, "a")
-                if(buy_cost < picnic_bid):
+                print("sell basket for", picnic_bid, "buy items for", buy_cost)
+                
+                if(buy_cost < picnic_bid + bp):
                     result["PICNIC_BASKET"].append(Order("PICNIC_BASKET", picnic_bid, -1)) #sell basket
                     result["DIP"].extend(temp_orders["DIP"]) #buy the rest
                     result["UKULELE"].extend(temp_orders["UKULELE"])
                     result["BAGUETTE"].extend(temp_orders["BAGUETTE"])
+                else:
+                    
+                    break
             except:
-                pass        
+                break        
                 
             #if(dict_sum(dip_book.buy_orders) >= 4 and dict_sum(bread_book.buy_orders) >= 2 and dict_sum(uk_book.buy_orders) >= 1):
+            
+        
+        while(True):
             try:  
                 #calculate sell cost
                 sell_cost = 0
@@ -332,14 +347,16 @@ class Trader:
                 sell_cost += uk_buy * qty
                 temp_orders["UKULELE"].append(Order("UKULELE", uk_buy, -qty)) #sell
                 
-                print(sell_cost, picnic_ask, "b")
-                if(sell_cost > picnic_ask):
+                print("buy basket for", picnic_ask, "sell items for", sell_cost)
+                if(sell_cost > picnic_ask + bp):
                     result["PICNIC_BASKET"].append(Order("PICNIC_BASKET", picnic_ask, 1)) #buy basket
                     result["DIP"].extend(temp_orders["DIP"]) #sell the rest
                     result["UKULELE"].extend(temp_orders["UKULELE"])
                     result["BAGUETTE"].extend(temp_orders["BAGUETTE"])
+                else:
+                    break
             except:
-                pass     
+                break     
             
         
         
